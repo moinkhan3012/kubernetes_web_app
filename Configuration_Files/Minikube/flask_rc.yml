@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-rc
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: flask
+  template:
+    metadata:
+      name: flask
+      labels:
+        app: flask
+    spec:
+      containers:
+      - name: flask-app-container
+        image: mk8793/flask-docker-new:latest
+        ports:
+        - containerPort: 5000
+        env:
+          - name: MONGO_HOST
+            value: mongodb-service
+          - name: MONGO_PORT
+            value: "27017"
+          - name: FLASK_ENV
+            value: development
+          - name: PORT
+            value: "5000"
+        livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - curl --fail http://mongodb-service:27017/ || exit 1
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          failureThreshold: 4
+
